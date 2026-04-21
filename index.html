@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Chart Timeline Example</title>
+    <meta name="robots" content="noindex, nofollow">
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="favicon/android-chrome-512x512.png">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #34495e;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Tab Navigation Styles */
+        .nav-tabs {
+            background: white;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 0;
+        }
+
+        /* Chart.js tooltip z-index override */
+        canvas {
+            position: relative !important;
+            z-index: 1 !important;
+            pointer-events: auto !important;
+        }
+        
+        .chart-container canvas {
+            z-index: 1 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Global tooltip z-index fix */
+        .chartjs-tooltip {
+            z-index: 99999 !important;
+            pointer-events: auto !important;
+        }
+        
+        div[id*="tooltip"] {
+            z-index: 99999 !important;
+            pointer-events: auto !important;
+        }
+
+        .nav-tabs .nav-link {
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: transparent;
+        }
+        .nav-tabs .nav-link.active:hover {
+            background-color: #3174e1;
+        }
+        .nav-tabs .nav-link:hover:not(.active) {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 0 0  8px 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .controls {
+            padding: 1.5rem;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #475569;
+            letter-spacing: 0.025em;
+            white-space: nowrap;
+        }
+
+        .modern-select {
+            appearance: none;
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.75rem 2.5rem 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            min-width: 140px;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1rem;
+        }
+
+        .modern-select:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .modern-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .modern-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .print-button {
+            background: #10b981;
+        }
+        .print-button:hover {
+            background: #059669;
+        }
+        .print-button svg {
+            width: 1.125rem;
+            height: 1.125rem;
+        }
+
+        .divider {
+            width: 1px;
+            height: 2rem;
+            background: linear-gradient(to bottom, transparent, #e2e8f0, transparent);
+        }
+
+        .chart-canvas {
+            min-height: 700px;
+        }       
+        .filter-group.date-time-selectors {
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+        }
+        .filter-group.date-time-selectors .col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        @media screen and (max-width: 768px) {
+            .chart-canvas {
+                min-height: 700px;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .filter-group {
+                justify-content: space-between;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .button-label {
+                display: none;
+            }
+            .modern-select {
+                min-width: auto;
+                flex: 1;
+                width: 100%;
+            }
+            
+            .divider {
+                display: none;
+            }
+            .tab-content {
+                margin-left: -2rem;
+                margin-right: -2rem;
+            }
+            
+            .chart-container {
+                padding-bottom: 1rem;
+                overflow-x: scroll;
+                position: relative;
+            }
+            
+            .chart-container-scroll {
+                min-width: 800px;
+            }
+        }
+
+        @media screen and (max-width: 600px) {
+            .chart-container {
+                padding-left: 0;
+                padding-right: 0;
+            }
+        }
+        @media screen and (max-width: 500px) {
+
+
+            .nav-tabs {
+                margin-left: -2rem;
+                margin-right: -2rem;
+            }
+            .nav-tabs li button {
+                width: 100%;
+            }
+            .nav-tabs li {
+                width: 100%;
+            }
+        }
+        /* Chart.js tooltip interaction fix */
+        .chartjs-tooltip {
+            position: absolute !important;
+            z-index: 99999 !important;
+            pointer-events: auto !important;
+            background: rgba(0, 0, 0, 0.8) !important;
+            color: white !important;
+            border-radius: 6px !important;
+            padding: 8px 12px !important;
+            border: 1px solid #ffffff !important;
+        }
+
+        /* Cursor pointer for canvas to indicate clickability */
+        .chart-container canvas {
+            cursor: pointer !important;
+        }
+
+        .chart-container canvas:hover {
+            cursor: pointer !important;
+        }
+        .ginner-container {
+            max-width: 90%!important;
+            height: 90vh!important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main content - PASSWORD TEMPORARILY DISABLED -->
+    <div class="main-content" style="display: block;">
+        <div class="container">
+            <h1>Timeline: Post-C-Section Care for Jane D. at Central Hospital</h1>
+            <p class="subtitle">April 21, 2025</p>
+        
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs" id="chartTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pacu-fcc-tab" data-bs-toggle="tab" data-bs-target="#pacu-fcc" type="button" role="tab" aria-controls="pacu-fcc" aria-selected="true">
+                    PACU / FCC
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="operation-room-tab" data-bs-toggle="tab" data-bs-target="#operation-room" type="button" role="tab" aria-controls="operation-room" aria-selected="false">
+                    Operation Room / ICU
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="chartTabsContent">
+            <!-- PACU/FCC Tab -->
+            <div class="tab-pane fade show active" id="pacu-fcc" role="tabpanel" aria-labelledby="pacu-fcc-tab">
+                <div class="controls">
+                    <div class="filter-group">
+                        <label class="filter-label">Vital Sign:</label>
+                        <select id="pacuFccVitalSelector" class="modern-select">
+                            <option value="hr">Heart Rate</option>
+                            <option value="systolic">Systolic BP</option>
+                            <option value="diastolic">Diastolic BP</option>
+                            <option value="map">MAP</option>
+                            <option value="rr">Respiratory Rate</option>
+                            <option value="si">Shock Index</option>
+                        </select>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="filter-group date-time-selectors">
+                        <div class="col">
+                            <label for="pacuFccTimeFromSelector" class="filter-label">Time from:</label>
+                            <select id="pacuFccTimeFromSelector" class="modern-select">
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label for="pacuFccTimeToSelector" class="filter-label">Time to:</label>
+                            <select id="pacuFccTimeToSelector" class="modern-select">
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- <div class="filter-group">
+                        <label for="pacuFccTimeToSelector" class="filter-label">To:</label>
+                        <select id="pacuFccTimeToSelector" class="modern-select">
+                        </select>
+                    </div> -->
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Time Format:</label>
+                        <select id="pacuFccTimeFormatSelector" class="modern-select">
+                            <option value="yes">24 hours</option>
+                            <option value="no">12 hours</option>
+                        </select>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label button-label">&nbsp;</label>
+                        <button id="pacuFccPrintChart" class="modern-button print-button">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19,8H5A3,3 0 0,0 2,11V17H6V21H18V17H22V11A3,3 0 0,0 19,8M18,3H6V7H18V3M8,15H16V19H8V15M19,12A1,1 0 0,1 18,11A1,1 0 0,1 19,10A1,1 0 0,1 20,11A1,1 0 0,1 19,12Z" />
+                            </svg>
+                            Print Chart
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-container-scroll">
+                        <canvas id="pacuFccChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+
+
+            </div>
+
+            <!-- Operation Room Tab -->
+            <div class="tab-pane fade" id="operation-room" role="tabpanel" aria-labelledby="operation-room-tab">
+                <div class="controls">
+                    <div class="filter-group">
+                        <label class="filter-label">Vital Sign:</label>
+                        <select id="operationRoomVitalSelector" class="modern-select">
+                            <option value="hr">Heart Rate</option>
+                            <option value="systolic">Systolic BP</option>
+                            <option value="diastolic">Diastolic BP</option>
+                            <option value="map">MAP</option>
+                            <option value="rr">Respiratory Rate</option>
+                        </select>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="filter-group date-time-selectors">
+                        <div class="col">
+                            <label for="operationRoomTimeFromSelector" class="filter-label">Time from:</label>
+                            <select id="operationRoomTimeFromSelector" class="modern-select">
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label for="operationRoomTimeToSelector" class="filter-label">Time to:</label>
+                            <select id="operationRoomTimeToSelector" class="modern-select">
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Time Format:</label>
+                        <select id="operationRoomTimeFormatSelector" class="modern-select">
+                            <option value="yes">24 hours</option>
+                            <option value="no">12 hours</option>
+                        </select>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label button-label">&nbsp;</label>
+                        <button id="operationRoomPrintChart" class="modern-button print-button">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19,8H5A3,3 0 0,0 2,11V17H6V21H18V17H22V11A3,3 0 0,0 19,8M18,3H6V7H18V3M8,15H16V19H8V15M19,12A1,1 0 0,1 18,11A1,1 0 0,1 19,10A1,1 0 0,1 20,11A1,1 0 0,1 19,12Z" />
+                            </svg>
+                            Print Chart
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-container-scroll">
+                        <canvas id="operationRoomChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="background: #192532; color: white; padding: 2rem 0; margin-top: 3rem; text-align: center;">
+        <div class="container">
+            <p style="margin: 0; font-size: 1rem; font-weight: 500; opacity: 0.9;">
+                Custom medical data visualization solutions available
+            </p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.7;">
+                Contact: <a href="mailto:iglinro@gmail.com" style="color: #57bcff; text-decoration: none; font-weight: 600;">iglinro@gmail.com</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="js/common-chart-functions.js"></script>
+    <script src="js/pacu-fcc-data.js"></script>
+    <script src="js/operation-room-data.js"></script>
+    <script src="js/chart-manager.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+        function initializeApp() {
+            // Initialize GLightbox and other app functionality
+            initializeGLightbox();
+        }
+        
+        function initializeGLightbox() {
+            // Initialize GLightbox for all elements with data-glightbox attribute
+            const lightbox = GLightbox({
+                selector: '[data-glightbox]',
+                touchNavigation: true,
+                loop: false,
+                autoplayVideos: false,
+                skin: 'clean',
+                closeButton: true,
+                beforeSlideLoad: function(slide, data) {
+                    // Custom handling for PDF files
+                    if (data && data.href && data.href.toLowerCase().includes('.pdf')) {
+                        // Create custom content for PDF
+                        slide.content = `
+                            <div style="width: 98vw; height: 98vh; background: #f0f0f0; position: relative;">
+                                <object data="${data.href}#toolbar=1&navpanes=1&scrollbar=1" 
+                                        type="application/pdf" 
+                                        width="100%" 
+                                        height="100%"
+                                        style="border: none;">
+                                    <embed src="${data.href}#toolbar=1&navpanes=1&scrollbar=1" 
+                                           type="application/pdf" 
+                                           width="100%" 
+                                           height="100%"
+                                           style="border: none;">
+                                        <div style="padding: 20px; text-align: center; background: white; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                            <p style="font-size: 18px; margin-bottom: 20px;">Unable to display PDF file in browser.</p>
+                                            <a href="${data.href}" 
+                                               download 
+                                               style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 5px;">
+                                               Download PDF
+                                            </a>
+                                            <a href="${data.href}" 
+                                               target="_blank" 
+                                               style="background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 5px;">
+                                               Open in New Tab
+                                            </a>
+                                        </div>
+                                    </embed>
+                                </object>
+                            </div>
+                        `;
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
